@@ -1,42 +1,37 @@
-﻿using System;
-using Newtonsoft.Json;
-using Sales.Shared.Responses.Sales.Shared.Responses;
+﻿using Newtonsoft.Json;
+using Sales.Shared.Responses;
 
 namespace Sales.API.Services
 {
-	public class ApiService : IApiService
+    public class ApiService : IApiService
     {
         private readonly string _urlBase;
         private readonly string _tokenName;
         private readonly string _tokenValue;
 
-
-        public ApiService(IConfiguration configuration )
+        public ApiService(IConfiguration configuration)
         {
-            
             _urlBase = configuration["CoutriesAPI:urlBase"]!;
             _tokenName = configuration["CoutriesAPI:tokenName"]!;
             _tokenValue = configuration["CoutriesAPI:tokenValue"]!;
-
         }
 
-        public async Task<Response> GetListAsync<T>(string servicePrefix, string controller)
+        public async Task<Response<List<T>>> GetListAsync<T>(string servicePrefix, string controller)
         {
             try
             {
-                HttpClient client = new()
+                var client = new HttpClient()
                 {
                     BaseAddress = new Uri(_urlBase),
                 };
 
                 client.DefaultRequestHeaders.Add(_tokenName, _tokenValue);
-                string url = $"{servicePrefix}{controller}";
-                HttpResponseMessage response = await client.GetAsync(url);
-                string result = await response.Content.ReadAsStringAsync();
-
+                var url = $"{servicePrefix}{controller}";
+                var response = await client.GetAsync(url);
+                var result = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new Response
+                    return new Response<List<T>>
                     {
                         IsSuccess = false,
                         Message = result,
@@ -44,7 +39,7 @@ namespace Sales.API.Services
                 }
 
                 List<T> list = JsonConvert.DeserializeObject<List<T>>(result)!;
-                return new Response
+                return new Response<List<T>>
                 {
                     IsSuccess = true,
                     Result = list
@@ -52,7 +47,7 @@ namespace Sales.API.Services
             }
             catch (Exception ex)
             {
-                return new Response
+                return new Response<List<T>>
                 {
                     IsSuccess = false,
                     Message = ex.Message

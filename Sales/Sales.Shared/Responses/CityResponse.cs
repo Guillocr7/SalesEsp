@@ -11,4 +11,3 @@ namespace Sales.Shared.Responses
         public string? Name { get; set; }
     }
 }
-
